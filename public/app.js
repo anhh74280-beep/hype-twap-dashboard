@@ -279,5 +279,5 @@ document.getElementById('langBtnRu').addEventListener('click', () => applyLangua
 applyLanguage(currentLang);
 
 refresh().catch(console.error);
-setInterval(() => refresh().catch(console.error), 1000);
+setInterval(() => refresh().catch(console.error), 5000);
 

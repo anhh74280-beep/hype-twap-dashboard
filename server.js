@@ -193,7 +193,11 @@ app.get('/chart', (_request, response) => {
 });
 
 app.get('/api/state', (_request, response) => {
-  response.json(collector.getState());
+  const state = collector.getState();
+  response.json({
+    latest: state.latest,
+    status: state.status
+  });
 });
 
 app.get('/api/snapshots', (_request, response) => {

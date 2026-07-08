@@ -2510,7 +2510,7 @@ function startup() {
   if (!hasShared) {
     refreshChart().catch(console.error);
   }
-  setInterval(() => refreshChart().catch(console.error), 5000);
+  setInterval(() => refreshChart().catch(console.error), 30000);
 }
 
 // Translations and Language Switch Logic for Chart & Alerts page
