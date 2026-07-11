@@ -212,6 +212,30 @@ app.get('/api/snapshots', (_request, response) => {
   response.json(aggregateSnapshots(snapshots, timeframe));
 });
 
+app.get('/api/snapshots/history', async (req, res) => {
+  try {
+    const timeframe = String(req.query.timeframe ?? '1m');
+    const from = String(req.query.from);
+    const to = String(req.query.to);
+
+    if (!from || !to) {
+      res.status(400).json({ error: 'Missing required parameters: from, to' });
+      return;
+    }
+
+    if (!Object.hasOwn(TIMEFRAMES, timeframe)) {
+      res.status(400).json({ error: `Unsupported timeframe: ${timeframe}` });
+      return;
+    }
+
+    const rangeSnapshots = await store.readRange(from, to);
+    res.json(aggregateSnapshots(rangeSnapshots, timeframe));
+  } catch (err) {
+    console.error('Error fetching historical snapshots:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Alerts Configuration APIs
 app.get('/api/config/telegram', async (req, res) => {
   try {

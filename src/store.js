@@ -2,7 +2,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 
-const DEFAULT_MAX_SNAPSHOTS = process.env.MAX_SNAPSHOTS ? parseInt(process.env.MAX_SNAPSHOTS, 10) : 100_000;
+const DEFAULT_MAX_SNAPSHOTS = process.env.MAX_SNAPSHOTS ? parseInt(process.env.MAX_SNAPSHOTS, 10) : 1_440;
 
 export class SnapshotStore {
   constructor(filePath, maxSnapshots = DEFAULT_MAX_SNAPSHOTS) {
@@ -219,6 +219,81 @@ export class SnapshotStore {
     const temporaryPath = `${this.filePath}.tmp`;
     await writeFile(temporaryPath, `${JSON.stringify(snapshots, null, 2)}\n`, 'utf8');
     await rename(temporaryPath, this.filePath);
+  }
+
+  /**
+   * Read snapshots within a specific time range, directly from Supabase
+   * (or filtered from local file if not in Supabase mode).
+   * @param {string} from - ISO 8601 start timestamp (inclusive)
+   * @param {string} to   - ISO 8601 end timestamp (inclusive)
+   * @returns {Promise<Array>}
+   */
+  async readRange(from, to) {
+    if (this.isSupabase) {
+      try {
+        let allRows = [];
+        let offset = 0;
+        const limit = 1000;
+        let hasMore = true;
+
+        const fromEnc = encodeURIComponent(from);
+        const toEnc   = encodeURIComponent(to);
+
+        while (hasMore) {
+          const url = `${this.supabaseUrl}/rest/v1/hype_snapshots` +
+            `?select=data&timestamp=gte.${fromEnc}&timestamp=lte.${toEnc}` +
+            `&order=timestamp.asc&limit=${limit}&offset=${offset}`;
+
+          const controller = new AbortController();
+          const timeoutId  = setTimeout(() => controller.abort(), 15000);
+          try {
+            const response = await fetch(url, {
+              method: 'GET',
+              headers: {
+                'apikey': this.supabaseKey,
+                'Authorization': `Bearer ${this.supabaseKey}`
+              },
+              signal: controller.signal
+            });
+            if (!response.ok) {
+              const errText = await response.text();
+              throw new Error(`Supabase readRange failed at offset ${offset}: ${response.status} - ${errText}`);
+            }
+            const rows = await response.json();
+            if (rows.length === 0) {
+              hasMore = false;
+            } else {
+              allRows = allRows.concat(rows);
+              offset += rows.length;
+              if (rows.length < limit) hasMore = false;
+            }
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        }
+
+        return allRows.map(r => r.data);
+      } catch (error) {
+        console.error('Error in readRange from Supabase, falling back to local file:', error);
+        // Fall through to local file fallback
+      }
+    }
+
+    // Local file fallback: filter by date range
+    try {
+      const raw  = await readFile(this.filePath, 'utf8');
+      const all  = JSON.parse(raw);
+      if (!Array.isArray(all)) return [];
+      const fromMs = new Date(from).getTime();
+      const toMs   = new Date(to).getTime();
+      return all.filter(s => {
+        const t = new Date(s.timestamp).getTime();
+        return t >= fromMs && t <= toMs;
+      });
+    } catch (err) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
+    }
   }
 }
 

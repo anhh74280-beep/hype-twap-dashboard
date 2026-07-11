@@ -951,7 +951,37 @@ function populateAllChartsData() {
 // Refresh from Backend
 async function refreshChart() {
   try {
-    const response = await fetch(`/api/snapshots?timeframe=${encodeURIComponent(selectedTimeframe)}`);
+    const toDate = new Date();
+    let fromDate = new Date();
+    
+    // Choose appropriate duration to load based on timeframe to keep payload sized reasonably
+    switch (selectedTimeframe) {
+      case '1m':
+        fromDate.setDate(toDate.getDate() - 2); // 2 days of 1m
+        break;
+      case '5m':
+        fromDate.setDate(toDate.getDate() - 10); // 10 days of 5m
+        break;
+      case '15m':
+        fromDate.setDate(toDate.getDate() - 30); // 30 days of 15m
+        break;
+      case '1h':
+        fromDate.setDate(toDate.getDate() - 120); // 120 days of 1h
+        break;
+      case '4h':
+        fromDate.setDate(toDate.getDate() - 480); // 480 days of 4h
+        break;
+      case '1d':
+        fromDate.setFullYear(toDate.getFullYear() - 5); // 5 years of 1d
+        break;
+      default:
+        fromDate.setDate(toDate.getDate() - 2);
+    }
+
+    const fromIso = fromDate.toISOString();
+    const toIso = toDate.toISOString();
+
+    const response = await fetch(`/api/snapshots/history?timeframe=${encodeURIComponent(selectedTimeframe)}&from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`);
     currentBuckets = await response.json();
     snapshotCount.textContent = String(currentBuckets.length);
     populateAllChartsData();
