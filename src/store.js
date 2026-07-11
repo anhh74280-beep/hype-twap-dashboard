@@ -156,30 +156,8 @@ export class SnapshotStore {
           throw new Error(`Supabase write failed: ${response.status} ${response.statusText} - ${errText}`);
         }
 
-        // Periodically trim old snapshots in the background (roughly once every 20 minutes)
-        if (Math.random() < 0.05) {
-          const cutoffMs = Date.now() - (this.maxSnapshots * 60_000);
-          const cutoffIso = new Date(cutoffMs).toISOString();
-          const deleteUrl = `${this.supabaseUrl}/rest/v1/hype_snapshots?timestamp=lt.${encodeURIComponent(cutoffIso)}`;
-          const deleteController = new AbortController();
-          const deleteTimeoutId = setTimeout(() => deleteController.abort(), 5000);
-          fetch(deleteUrl, {
-            method: 'DELETE',
-            headers: {
-              'apikey': this.supabaseKey,
-              'Authorization': `Bearer ${this.supabaseKey}`
-            },
-            signal: deleteController.signal
-          }).then(res => {
-            if (!res.ok) {
-              console.error('Failed to trim old Supabase snapshots:', res.statusText);
-            }
-          }).catch(err => {
-            console.error('Error trimming old Supabase snapshots:', err);
-          }).finally(() => {
-            clearTimeout(deleteTimeoutId);
-          });
-        }
+        // We no longer delete/trim old snapshots from Supabase to preserve the full history.
+        // The in-memory buffer limit is managed separately on startup readAll via maxSnapshots.
       } catch (error) {
         console.error('Error appending to Supabase:', error);
       } finally {
