@@ -528,7 +528,7 @@ app.post('/api/alerts/:id/toggle', authMiddleware, async (req, res) => {
       return;
     }
 
-    if (alert.telegram_user_id && alert.telegram_user_id !== String(req.user.id)) {
+    if (alert.telegram_user_id && String(alert.telegram_user_id) !== String(req.user.id)) {
       res.status(403).json({ error: 'Forbidden: You do not own this alert.' });
       return;
     }
@@ -558,7 +558,7 @@ app.delete('/api/alerts/:id', authMiddleware, async (req, res) => {
       return;
     }
 
-    if (alert.telegram_user_id && alert.telegram_user_id !== String(req.user.id)) {
+    if (alert.telegram_user_id && String(alert.telegram_user_id) !== String(req.user.id)) {
       res.status(403).json({ error: 'Forbidden: You do not own this alert.' });
       return;
     }
