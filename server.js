@@ -424,7 +424,10 @@ app.get('/api/alerts', async (req, res) => {
     }
 
     const alerts = await alertsStore.readAll();
-    const userAlerts = alerts.filter(a => a.telegram_user_id === String(user.id) || !a.telegram_user_id);
+    const userAlerts = alerts.filter(a => {
+      if (!a.telegram_user_id) return true;
+      return String(a.telegram_user_id) === String(user.id);
+    });
     res.json(userAlerts);
   } catch (err) {
     res.status(500).json({ error: err.message });
