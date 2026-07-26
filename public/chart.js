@@ -532,16 +532,12 @@ function addMetricToPanel(panelId, type, depth, customColor = null) {
   } else if (type === 'diff') {
     const title = depth.includes('B') || depth.includes('_') ? `DIFF ${depth.replace('_', '-')}` : `Diff ${depth}%`;
     
-    // Check if customColor was provided (meaning color is overridden)
-    const topCol = customColor || '#35d083';
-    const botCol = customColor || '#ef5e5e';
-    
     series.diff = panel.chart.addBaselineSeries({
       baseValue: { type: 'price', price: 0 },
-      topLineColor: topCol,
+      topLineColor: customColor || '#35d083',
       topFillColor1: 'rgba(53, 208, 131, 0.15)',
       topFillColor2: 'rgba(53, 208, 131, 0.0)',
-      bottomLineColor: botCol,
+      bottomLineColor: customColor || '#ef5e5e',
       bottomFillColor1: 'rgba(239, 94, 94, 0.0)',
       bottomFillColor2: 'rgba(239, 94, 94, 0.15)',
       lineWidth: 2,
