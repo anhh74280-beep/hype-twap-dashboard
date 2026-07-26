@@ -534,10 +534,10 @@ function addMetricToPanel(panelId, type, depth, customColor = null) {
     
     series.diff = panel.chart.addBaselineSeries({
       baseValue: { type: 'price', price: 0 },
-      topLineColor: customColor || '#35d083',
+      topLineColor: '#35d083',
       topFillColor1: 'rgba(53, 208, 131, 0.15)',
       topFillColor2: 'rgba(53, 208, 131, 0.0)',
-      bottomLineColor: customColor || '#ef5e5e',
+      bottomLineColor: '#ef5e5e',
       bottomFillColor1: 'rgba(239, 94, 94, 0.0)',
       bottomFillColor2: 'rgba(239, 94, 94, 0.15)',
       lineWidth: 2,
@@ -654,24 +654,10 @@ function updatePanelBadges(panelId) {
     const badge = document.createElement('div');
     badge.className = 'metric-badge';
     badge.innerHTML = `
-      <span class="badge-color-dot" style="background-color: ${metric.color}; cursor: pointer;" title="Change Color"></span>
-      <input type="color" class="badge-color-picker" value="${metric.color}" style="display: none;">
+      <span class="badge-color-dot" style="background-color: ${metric.color};"></span>
       <span>${label}</span>
       <button class="remove-badge-btn" type="button" data-metric-key="${metricKey}">×</button>
     `;
-
-    const colorDot = badge.querySelector('.badge-color-dot');
-    const colorPicker = badge.querySelector('.badge-color-picker');
-
-    colorDot.addEventListener('click', () => {
-      colorPicker.click();
-    });
-
-    colorPicker.addEventListener('change', (e) => {
-      const newColor = e.target.value;
-      colorDot.style.backgroundColor = newColor;
-      updateMetricColor(panelId, metricKey, newColor);
-    });
 
     badge.querySelector('.remove-badge-btn').addEventListener('click', () => {
       removeMetricFromPanel(panelId, metricKey);
